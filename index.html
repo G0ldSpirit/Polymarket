@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polymarket Trader Stats</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 650px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .username-display {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-card.large {
+            grid-column: 1 / -1;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            color: #333;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .win-rate {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        }
+
+        .total-positions {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        .closed-positions {
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+        }
+
+        .active-positions {
+            background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+        }
+
+        .profit {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .avg-profit {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        }
+
+        .avg-profit .stat-value {
+            color: white;
+        }
+
+        .avg-profit .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .volume {
+            background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
+        }
+
+        .win-loss {
+            background: linear-gradient(135deg, #ebc0fd 0%, #d9ded8 100%);
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+            border-left: 4px solid #c33;
+        }
+
+        .small-value {
+            font-size: 20px;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #1565c0;
+        }
+
+        .debug-info {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+            font-family: monospace;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Polymarket Trader Stats</h1>
+        <p class="subtitle">Entrez le pseudo d'un trader pour voir ses statistiques</p>
+
+        <div class="info-box">
+            💡 Entrez un pseudo (ex: blubberbuster) ou une adresse Ethereum (0x...)
+        </div>
+
+        <div class="input-group">
+            <label for="username">Pseudo ou Adresse du trader</label>
+            <input type="text" id="username" placeholder="ex: blubberbuster ou 0x123..." value="blubberbuster">
+        </div>
+
+        <button id="searchBtn">Rechercher</button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Chargement des statistiques...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="debug-info" id="debug" style="display: none;"></div>
+
+        <div class="results" id="results">
+            <div class="username-display" id="usernameDisplay"></div>
+            
+            <div class="stats-grid">
+                <div class="stat-card large win-rate">
+                    <div class="stat-label">Win Rate</div>
+                    <div class="stat-value" id="winRate">-</div>
+                </div>
+
+                <div class="stat-card total-positions">
+                    <div class="stat-label">Total Positions</div>
+                    <div class="stat-value" id="totalPositions">-</div>
+                </div>
+
+                <div class="stat-card closed-positions">
+                    <div class="stat-label">Positions Fermées</div>
+                    <div class="stat-value" id="closedPositions">-</div>
+                </div>
+
+                <div class="stat-card active-positions">
+                    <div class="stat-label">Positions Actives</div>
+                    <div class="stat-value" id="activePositions">-</div>
+                </div>
+
+                <div class="stat-card win-loss">
+                    <div class="stat-label">Wins / Losses</div>
+                    <div class="stat-value small-value" id="winLoss">-</div>
+                </div>
+
+                <div class="stat-card profit">
+                    <div class="stat-label">Profit Total</div>
+                    <div class="stat-value small-value" id="profit">-</div>
+                </div>
+
+                <div class="stat-card avg-profit">
+                    <div class="stat-label">Profit Moyen</div>
+                    <div class="stat-value small-value" id="avgProfit">-</div>
+                </div>
+
+                <div class="stat-card volume">
+                    <div class="stat-label">Volume Total</div>
+                    <div class="stat-value small-value" id="volume">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const searchBtn = document.getElementById('searchBtn');
+        const usernameInput = document.getElementById('username');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const error = document.getElementById('error');
+        const debug = document.getElementById('debug');
+
+        function addDebug(message) {
+            debug.style.display = 'block';
+            debug.innerHTML += message + '<br>';
+            console.log(message);
+        }
+
+        searchBtn.addEventListener('click', searchTrader);
+        usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchTrader();
+        });
+
+        async function searchTrader() {
+            const input = usernameInput.value.trim();
+            
+            if (!input) {
+                showError('Veuillez entrer un pseudo ou une adresse');
+                return;
+            }
+
+            // Reset UI
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            error.style.display = 'none';
+            debug.innerHTML = '';
+            debug.style.display = 'none';
+            searchBtn.disabled = true;
+
+            try {
+                // Tester plusieurs URLs possibles
+                const apiUrls = [
+                    `/api/trader?username=${encodeURIComponent(input)}`,
+                    `${window.location.origin}/api/trader?username=${encodeURIComponent(input)}`
+                ];
+
+                addDebug(`Trying API URL: ${apiUrls[0]}`);
+                
+                let response;
+                let lastError;
+
+                for (const url of apiUrls) {
+                    try {
+                        addDebug(`Attempting: ${url}`);
+                        response = await fetch(url);
+                        
+                        if (response.ok) {
+                            addDebug(`Success with: ${url}`);
+                            break;
+                        } else {
+                            addDebug(`Failed (${response.status}): ${url}`);
+                            lastError = `HTTP ${response.status}`;
+                        }
+                    } catch (e) {
+                        addDebug(`Error with ${url}: ${e.message}`);
+                        lastError = e.message;
+                    }
+                }
+
+                if (!response || !response.ok) {
+                    throw new Error(lastError || 'Unable to reach API');
+                }
+
+                const data = await response.json();
+                addDebug(`Data received: ${JSON.stringify(data)}`);
+                displayResults(data);
+
+            } catch (err) {
+                console.error('Error:', err);
+                addDebug(`Final error: ${err.message}`);
+                showError(`Erreur: ${err.message}. Vérifiez la console pour plus de détails.`);
+            } finally {
+                loading.style.display = 'none';
+                searchBtn.disabled = false;
+            }
+        }
+
+        function displayResults(data) {
+            const displayName = data.username.startsWith('0x') 
+                ? data.username.slice(0, 6) + '...' + data.username.slice(-4)
+                : data.username;
+                
+            document.getElementById('usernameDisplay').textContent = displayName;
+            document.getElementById('winRate').textContent = `${data.winRate}%`;
+            document.getElementById('totalPositions').textContent = data.totalPositions;
+            document.getElementById('closedPositions').textContent = data.closedPositions;
+            document.getElementById('activePositions').textContent = data.activePositions;
+            document.getElementById('winLoss').textContent = `${data.wins} / ${data.losses}`;
+            
+            const profitElement = document.getElementById('profit');
+            const profit = parseFloat(data.totalProfit);
+            profitElement.textContent = `$${data.totalProfit}`;
+            profitElement.style.color = profit >= 0 ? '#27ae60' : '#e74c3c';
+            
+            const avgProfitElement = document.getElementById('avgProfit');
+            avgProfitElement.textContent = `$${data.avgProfit}`;
+            
+            document.getElementById('volume').textContent = `$${data.totalVolume}`;
+            
+            results.style.display = 'block';
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.style.display = 'block';
+            results.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
